@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"sync"
 )
 
 type User struct {
@@ -85,6 +86,9 @@ func main() {
 		Balance: 50.5,
 	}
 	paymentSystem.AddUser(user2)
+	fmt.Println(user1.Balance)
+	fmt.Println(user2.Balance)
+
 	transaction1 := Transaction{
 		FromID: user1.ID,
 		ToID:   user2.ID,
@@ -97,16 +101,43 @@ func main() {
 		Amount: 0.5,
 	}
 	paymentSystem.AddTransaction(transaction2)
-	fmt.Println(user1.Balance)
-	fmt.Println(user2.Balance)
+	transaction3 := Transaction{
+		FromID: user2.ID,
+		ToID:   user1.ID,
+		Amount: 99.5,
+	}
+	paymentSystem.AddTransaction(transaction3)
+	transaction4 := Transaction{
+		FromID: user1.ID,
+		ToID:   user2.ID,
+		Amount: 51,
+	}
+	paymentSystem.AddTransaction(transaction4)
+
+	ch := make(chan Transaction, len(paymentSystem.Transactions))
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < 4; i++ {
+		wg.Go(func() {
+			Worker(ch, paymentSystem)
+		})
+	}
 
 	for _, t := range paymentSystem.Transactions {
-		if err := paymentSystem.ProcessingTransactions(t); err != nil {
+		ch <- t
+	}
+	close(ch)
+	wg.Wait()
+	fmt.Println(user1.Balance)
+	fmt.Println(user2.Balance)
+}
+
+func Worker(ch <-chan Transaction, ps *PaymentSystem) {
+	for transaction := range ch {
+		if err := ps.ProcessingTransactions(transaction); err != nil {
 			fmt.Printf("Transaction error: %s\n", err)
 			continue
 		}
-		fmt.Printf("Transaction from %s to %s. Sum: %.2f\n", t.FromID, t.ToID, t.Amount)
-		fmt.Println(user1.Balance)
-		fmt.Println(user2.Balance)
+		fmt.Printf("Transaction from %s to %s. Sum: %.2f\n", transaction.FromID, transaction.ToID, transaction.Amount)
 	}
 }
