@@ -49,8 +49,8 @@ func (ps *PaymentSystem) AddUser(user *User) {
 	fmt.Printf("User with ID %s added in PaymentSystem!\n", user.ID)
 }
 
-func (ps *PaymentSystem) AddTransaction(transaction *Transaction) {
-	ps.Transactions = append(ps.Transactions, *transaction)
+func (ps *PaymentSystem) AddTransaction(transaction Transaction) {
+	ps.Transactions = append(ps.Transactions, transaction)
 	fmt.Printf("Transaction from %s to %s users with amount %.2f added in queue\n", transaction.FromID, transaction.ToID, transaction.Amount)
 }
 
@@ -85,13 +85,13 @@ func main() {
 		Balance: 50.5,
 	}
 	paymentSystem.AddUser(user2)
-	transaction1 := &Transaction{
+	transaction1 := Transaction{
 		FromID: user1.ID,
 		ToID:   user2.ID,
 		Amount: 49.5,
 	}
 	paymentSystem.AddTransaction(transaction1)
-	transaction2 := &Transaction{
+	transaction2 := Transaction{
 		FromID: user2.ID,
 		ToID:   user1.ID,
 		Amount: 0.5,
