@@ -40,7 +40,7 @@ type PaymentSystem struct {
 func NewPaymentSystem() *PaymentSystem {
 	return &PaymentSystem{
 		Users:        make(map[string]*User),
-		Transactions: make([]Transaction, 5, 10),
+		Transactions: make([]Transaction, 0, 5),
 	}
 }
 
@@ -51,7 +51,7 @@ func (ps *PaymentSystem) AddUser(user *User) {
 
 func (ps *PaymentSystem) AddTransaction(transaction *Transaction) {
 	ps.Transactions = append(ps.Transactions, *transaction)
-	fmt.Printf("Transaction from %s to %s users added in queue\n", transaction.FromID, transaction.ToID)
+	fmt.Printf("Transaction from %s to %s users with amount %.2f added in queue\n", transaction.FromID, transaction.ToID, transaction.Amount)
 }
 
 func (ps *PaymentSystem) ProcessingTransactions(transaction Transaction) error {
@@ -82,38 +82,31 @@ func main() {
 	user2 := &User{
 		ID:      "user2",
 		Name:    "Regina",
-		Balance: 68.5,
+		Balance: 50.5,
 	}
 	paymentSystem.AddUser(user2)
 	transaction1 := &Transaction{
 		FromID: user1.ID,
 		ToID:   user2.ID,
-		Amount: 50.5,
+		Amount: 49.5,
 	}
 	paymentSystem.AddTransaction(transaction1)
 	transaction2 := &Transaction{
 		FromID: user2.ID,
 		ToID:   user1.ID,
-		Amount: 18,
+		Amount: 0.5,
 	}
 	paymentSystem.AddTransaction(transaction2)
 	fmt.Println(user1.Balance)
 	fmt.Println(user2.Balance)
 
-	for i := range paymentSystem.Transactions {
-		fmt.Printf("Transaction from %s to %s. Sum: %.2f", paymentSystem.Transactions[i].FromID, paymentSystem.Transactions[i].ToID, paymentSystem.Transactions[i].Amount)
+	for _, t := range paymentSystem.Transactions {
+		if err := paymentSystem.ProcessingTransactions(t); err != nil {
+			fmt.Printf("Transaction error: %s\n", err)
+			continue
+		}
+		fmt.Printf("Transaction from %s to %s. Sum: %.2f\n", t.FromID, t.ToID, t.Amount)
 		fmt.Println(user1.Balance)
 		fmt.Println(user2.Balance)
 	}
-	fmt.Println(user1.Balance)
-	fmt.Println(user2.Balance)
-
-	// if err := user1.Withdraw(300); err != nil {
-	// 	fmt.Printf("Error for %s: %s\n", user1.Name, err)
-	// }
-	// if err := user2.Withdraw(5.19); err != nil {
-	// 	fmt.Printf("Error for %s: %s\n", user2.Name, err)
-	// }
-	// fmt.Println(user1.Balance)
-	// fmt.Println(user2.Balance)
 }
